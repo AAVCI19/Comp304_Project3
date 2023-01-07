@@ -12,11 +12,11 @@
 
 #define TLB_SIZE 16
 #define PAGES 1024
-#define PAGE_MASK /* TODO */
+#define PAGE_MASK 1023
 
 #define PAGE_SIZE 1024
 #define OFFSET_BITS 10
-#define OFFSET_MASK /* TODO */
+#define OFFSET_MASK 1023
 
 #define MEMORY_SIZE PAGES * PAGE_SIZE
 
@@ -116,9 +116,9 @@ int main(int argc, const char *argv[])
     /* TODO 
     / Calculate the page offset and logical page number from logical_address */
     // get the last 10 bit (0 - 9)
-    int offset = logical_address & (PAGE_SIZE - 1);
+    int offset = logical_address & OFFSET_MASK;
     // get the (10 - 19) bits 
-    int logical_page = (logical_address >> OFFSET_BITS) & (PAGE_SIZE - 1); 
+    int logical_page = (logical_address >> OFFSET_BITS) & PAGE_MASK; 
     ///////
     
     int physical_page = search_tlb(logical_page);
