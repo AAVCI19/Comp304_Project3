@@ -51,6 +51,17 @@ int max(int a, int b)
 /* Returns the physical address from TLB or -1 if not present. */
 int search_tlb(unsigned char logical_page) {
     /* TODO */
+    // iterate the tlb array and check for logical_page existed or not
+    // if it exists, then return the physical page otherwise return -1
+    struct tlbentry tlb1;
+    for(int i = 0; i < TLB_SIZE; i++){
+      tlb1 = tlb[i];
+      if(tlb1.logical == logical_page){
+        return tlb1.physical;
+      }
+    }
+    return -1;
+
 }
 
 /* Adds the specified mapping to the TLB, replacing the oldest mapping (FIFO replacement). */
@@ -121,6 +132,18 @@ int main(int argc, const char *argv[])
       // Page fault
       if (physical_page == -1) {
           /* TODO */
+          // increase page_faults
+          page_faults++;
+          // assign physical page to the free page 
+          // increase free_page
+          physical_page = free_page;
+          free_page++;
+          // bring the page from backing to the main memory
+          memcpy(main_memory + physical_page* PAGE_SIZE, backing + logical_page * PAGE_SIZE, PAGE_SIZE);
+          // reset page table
+          pagetable[logical_page] = physical_page;
+
+
       }
 
       add_to_tlb(logical_page, physical_page);
