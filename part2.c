@@ -18,7 +18,9 @@
 #define OFFSET_BITS 10
 #define OFFSET_MASK 1023
 
-#define MEMORY_SIZE PAGES * PAGE_SIZE
+#define page_frame 256 // As stated in the pdf
+
+#define MEMORY_SIZE page_frame * PAGE_SIZE // changing accordingly 
 
 // Max number of characters per line of input file to read.
 #define BUFFER_SIZE 10
@@ -58,12 +60,29 @@ void add_to_tlb(unsigned char logical, unsigned char physical) {
     /* TODO */
 }
 
+int policy_select(int argc, char *argv[]){
+
+if (argc != 5)
+{
+    printf("Incorrect amount of arguments");
+    return -1;
+}
+
+if (strcmp(argv[3], "-p") != 0)
+{
+    printf("missing flag");
+    return -1;
+}
+
+int p = atoi(argv[4]);
+
+return p;
+}
+
 int main(int argc, const char *argv[])
 {
-  if (argc != 3) {
-    fprintf(stderr, "Usage ./virtmem backingstore input\n");
-    exit(1);
-  }
+ 
+ int p = policy_select(argc, argv); // initializing the policy number
   
   const char *backing_filename = argv[1]; 
   int backing_fd = open(backing_filename, O_RDONLY);
@@ -110,6 +129,17 @@ int main(int argc, const char *argv[])
       // Page fault
       if (physical_page == -1) {
           /* TODO */
+
+          if (p == 0)
+          {
+            /* FIFO */
+            
+          } else if (p == 1)
+          {
+            /* LRU */
+          }
+          
+          
       }
 
       add_to_tlb(logical_page, physical_page);
