@@ -56,6 +56,15 @@ int search_tlb(unsigned char logical_page) {
 /* Adds the specified mapping to the TLB, replacing the oldest mapping (FIFO replacement). */
 void add_to_tlb(unsigned char logical, unsigned char physical) {
     /* TODO */
+    // create tlbentry buffer and set to 0 for adding to the array
+    struct tlbentry tlb1;
+    memset(&tlb1, 0, sizeof(tlb1));
+    // add values to tlb1 and add to the array
+    tlb1.logical = logical;
+    tlb1.physical = physical;
+    tlb[tlbindex] = tlb1;
+    // for FIFO replacements
+    tlbindex = (tlbindex + 1) % TLB_SIZE;
 }
 
 int main(int argc, const char *argv[])
@@ -95,8 +104,10 @@ int main(int argc, const char *argv[])
 
     /* TODO 
     / Calculate the page offset and logical page number from logical_address */
-    int offset =
-    int logical_page =
+    // get the last 10 bit (0 - 9)
+    int offset = logical_address & (PAGE_SIZE - 1);
+    // get the (10 - 19) bits 
+    int logical_page = (logical_address >> OFFSET_BITS) & (PAGE_SIZE - 1); 
     ///////
     
     int physical_page = search_tlb(logical_page);
