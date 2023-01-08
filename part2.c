@@ -26,8 +26,8 @@
 #define BUFFER_SIZE 10
 
 struct tlbentry {
-  unsigned char logical;
-  unsigned char physical;
+  unsigned int logical;
+  unsigned int physical;
 };
 
 // TLB is kept track of as a circular array, with the oldest element being overwritten once the TLB is full.
@@ -38,10 +38,10 @@ int tlbindex = 0;
 // pagetable[logical_page] is the physical page number for logical page. Value is -1 if that logical page isn't yet in the table.
 int pagetable[PAGES];
 
-signed char main_memory[MEMORY_SIZE];
+signed int main_memory[MEMORY_SIZE];
 
 // Pointer to memory mapped backing file
-signed char *backing;
+signed int *backing;
 
 int max(int a, int b)
 {
@@ -51,7 +51,7 @@ int max(int a, int b)
 }
 
 /* Returns the physical address from TLB or -1 if not present. */
-int search_tlb(unsigned char logical_page) {
+int search_tlb(unsigned int logical_page) {
     /* TODO */
      struct tlbentry tlb1;
     for(int i = 0; i < TLB_SIZE; i++){
@@ -60,10 +60,11 @@ int search_tlb(unsigned char logical_page) {
         return tlb1.physical;
       }
     }
+    return -1;
 }
 
 /* Adds the specified mapping to the TLB, replacing the oldest mapping (FIFO replacement). */
-void add_to_tlb(unsigned char logical, unsigned char physical) {
+void add_to_tlb(unsigned int logical, unsigned int physical) {
     /* TODO */
     struct tlbentry tlb1;
     memset(&tlb1, 0, sizeof(tlb1));
@@ -75,7 +76,7 @@ void add_to_tlb(unsigned char logical, unsigned char physical) {
     tlbindex = (tlbindex + 1) % TLB_SIZE;
 }
 
-int policy_select(int argc, char *argv[]){
+int policy_select(int argc, const char *argv[]){
 
 if (argc != 5)
 {
@@ -121,7 +122,7 @@ int main(int argc, const char *argv[])
   int page_faults = 0;
   
   // Number of the next unallocated physical page in main memory
-  unsigned char free_page = 0;
+  unsigned int free_page = 0;
   
   while (fgets(buffer, BUFFER_SIZE, input_fp) != NULL) {
     total_addresses++;
@@ -144,16 +145,17 @@ int main(int argc, const char *argv[])
       // Page fault
       if (physical_page == -1) {
           /* TODO */
+          page_faults++;
 
           if (p == 0)
           {
             /* FIFO */
              // increase page_faults
-          page_faults++;
+          
           // assign physical page to the free page 
           // increase free_page
-          physical_page = free_page;
           free_page++;
+          physical_page = (free_page) % (page_frame);
           // bring the page from backing to the main memory
           memcpy(main_memory + physical_page* PAGE_SIZE, backing + logical_page * PAGE_SIZE, PAGE_SIZE);
           // reset page table
