@@ -53,11 +53,26 @@ int max(int a, int b)
 /* Returns the physical address from TLB or -1 if not present. */
 int search_tlb(unsigned char logical_page) {
     /* TODO */
+     struct tlbentry tlb1;
+    for(int i = 0; i < TLB_SIZE; i++){
+      tlb1 = tlb[i];
+      if(tlb1.logical == logical_page){
+        return tlb1.physical;
+      }
+    }
 }
 
 /* Adds the specified mapping to the TLB, replacing the oldest mapping (FIFO replacement). */
 void add_to_tlb(unsigned char logical, unsigned char physical) {
     /* TODO */
+    struct tlbentry tlb1;
+    memset(&tlb1, 0, sizeof(tlb1));
+    // add values to tlb1 and add to the array
+    tlb1.logical = logical;
+    tlb1.physical = physical;
+    tlb[tlbindex] = tlb1;
+    // for FIFO replacements
+    tlbindex = (tlbindex + 1) % TLB_SIZE;
 }
 
 int policy_select(int argc, char *argv[]){
@@ -133,6 +148,16 @@ int main(int argc, const char *argv[])
           if (p == 0)
           {
             /* FIFO */
+             // increase page_faults
+          page_faults++;
+          // assign physical page to the free page 
+          // increase free_page
+          physical_page = free_page;
+          free_page++;
+          // bring the page from backing to the main memory
+          memcpy(main_memory + physical_page* PAGE_SIZE, backing + logical_page * PAGE_SIZE, PAGE_SIZE);
+          // reset page table
+          pagetable[logical_page] = physical_page;
             
           } else if (p == 1)
           {
