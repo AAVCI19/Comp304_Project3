@@ -53,27 +53,26 @@ int max(int a, int b)
 /* Returns the physical address from TLB or -1 if not present. */
 int search_tlb(unsigned int logical_page) {
     /* TODO */
-     struct tlbentry tlb1;
-    for(int i = 0; i < TLB_SIZE; i++){
-      tlb1 = tlb[i];
-      if(tlb1.logical == logical_page){
-        return tlb1.physical;
-      }
+      struct tlbentry tlb1;
+  for (int i = 0; i < TLB_SIZE; i++) {
+    tlb1 = tlb[i];
+    if (tlb1.logical == logical_page) {
+      return tlb1.physical;
     }
+  }
     return -1;
 }
 
 /* Adds the specified mapping to the TLB, replacing the oldest mapping (FIFO replacement). */
 void add_to_tlb(unsigned int logical, unsigned int physical) {
     /* TODO */
-    struct tlbentry tlb1;
-    memset(&tlb1, 0, sizeof(tlb1));
-    // add values to tlb1 and add to the array
-    tlb1.logical = logical;
-    tlb1.physical = physical;
-    tlb[tlbindex] = tlb1;
-    // for FIFO replacements
-    tlbindex = (tlbindex + 1) % TLB_SIZE;
+   struct tlbentry tlb1;
+  memset(&tlb1, 0, sizeof(tlb1));
+  // add values to tlb1 and add to the array
+  tlb1.logical = logical;
+  tlb1.physical = physical;
+  tlb[tlbindex % TLB_SIZE] = tlb1;
+  tlbindex++;
 }
 
 int policy_select(int argc, const char *argv[]){
@@ -158,7 +157,7 @@ int main(int argc, const char *argv[])
           physical_page = (free_page) % (page_frame);
           // bring the page from backing to the main memory
           memcpy(main_memory + physical_page* PAGE_SIZE, backing + logical_page * PAGE_SIZE, PAGE_SIZE);
-          // reset page table
+          // update page table
           pagetable[logical_page] = physical_page;
             
           } else if (p == 1)
