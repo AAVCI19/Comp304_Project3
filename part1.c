@@ -140,7 +140,7 @@ int main(int argc, const char *argv[]) {
         /* TODO */
         // increase page_faults
         page_faults++;
-        // assign physical page to the free page
+        // assign free page to the physical page
         // increase free_page
         physical_page = free_page;
         free_page++;
@@ -149,7 +149,7 @@ int main(int argc, const char *argv[]) {
                backing + logical_page * PAGE_SIZE, PAGE_SIZE);
       
 
-        // reset page table
+        // update page table
         pagetable[logical_page] = physical_page;
       }
 

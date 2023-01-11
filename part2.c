@@ -23,9 +23,10 @@
 // Max number of characters per line of input file to read.
 #define BUFFER_SIZE 10
 
-struct tlbentry {
-  unsigned char logical;
-  unsigned char physical;
+struct tlbentry
+{
+    unsigned char logical;
+    unsigned char physical;
 };
 
 // TLB is kept track of as a circular array, with the oldest element being
@@ -39,156 +40,232 @@ int tlbindex = 0;
 // is -1 if that logical page isn't yet in the table.
 int pagetable[PAGES];
 
+int counter_arr[PAGES];
+
 signed char main_memory[MEMORY_SIZE];
 
 // Pointer to memory mapped backing file
 signed char *backing;
 
-int max(int a, int b) {
-  if (a > b)
-    return a;
-  return b;
+int max(int a, int b)
+{
+    if (a > b)
+        return a;
+    return b;
 }
 
 /* Returns the physical address from TLB or -1 if not present. */
-int search_tlb(unsigned char logical_page) {
-  /* TODO */
-  // iterate the tlb array and check for logical_page existed or not
-  // if it exists, then return the physical page otherwise return -1
-  struct tlbentry tlb1;
-  for (int i = 0; i < TLB_SIZE; i++) {
-    tlb1 = tlb[i];
-    if (tlb1.logical == logical_page) {
-      return tlb1.physical;
+int search_tlb(unsigned char logical_page)
+{
+    /* TODO */
+    // iterate the tlb array and check for logical_page existed or not
+    // if it exists, then return the physical page otherwise return -1
+    struct tlbentry tlb1;
+    for (int i = 0; i < TLB_SIZE; i++)
+    {
+        tlb1 = tlb[i];
+        if (tlb1.logical == logical_page)
+        {
+            return tlb1.physical;
+        }
     }
-  }
-  return -1;
+    return -1;
 }
 
 /* Adds the specified mapping to the TLB, replacing the oldest mapping (FIFO
  * replacement). */
-void add_to_tlb(unsigned char logical, unsigned char physical) {
-  /* TODO */
-  // create tlbentry buffer and set to 0 for adding to the array
-  struct tlbentry tlb1;
-  memset(&tlb1, 0, sizeof(tlb1));
-  // add values to tlb1 and add to the array
-  tlb1.logical = logical;
-  tlb1.physical = physical;
-  tlb[tlbindex % TLB_SIZE] = tlb1;
-  tlbindex++;
-  // tlb[tlbindex] = tlb1;
-  // for FIFO replacements
-  // tlbindex = (tlbindex + 1) % TLB_SIZE;
+void add_to_tlb(unsigned char logical, unsigned char physical)
+{
+    /* TODO */
+    // create tlbentry buffer and set to 0 for adding to the array
+    struct tlbentry tlb1;
+    memset(&tlb1, 0, sizeof(tlb1));
+    // add values to tlb1 and add to the array
+    tlb1.logical = logical;
+    tlb1.physical = physical;
+    tlb[tlbindex % TLB_SIZE] = tlb1;
+    tlbindex++;
+    
 }
-int policy_select(int argc, const char *argv[]) {
+int policy_select(int argc, const char *argv[])
+{
 
-  if (argc != 5) {
-    printf("Incorrect amount of arguments");
-    return -1;
-  }
-
-  if (strcmp(argv[3], "-p") != 0) {
-    printf("missing flag");
-    return -1;
-  }
-
-  int p = atoi(argv[4]);
-
-  return p;
-}
-int main(int argc, const char *argv[]) {
-
-  const char *backing_filename = argv[1];
-  int backing_fd = open(backing_filename, O_RDONLY);
-  backing = mmap(0, 1024 * 1024, PROT_READ, MAP_PRIVATE, backing_fd, 0);
-
-  const char *input_filename = argv[2];
-  FILE *input_fp = fopen(input_filename, "r");
-
-  // Fill page table entries with -1 for initially empty table.
-  int i;
-  for (i = 0; i < PAGES; i++) {
-    pagetable[i] = -1;
-  }
-
-  // Character buffer for reading lines of input file.
-  char buffer[BUFFER_SIZE];
-
-  // Data we need to keep track of to compute stats at end.
-  int total_addresses = 0;
-  int tlb_hits = 0;
-  int page_faults = 0;
-
-  // Number of the next unallocated physical page in main memory
-  unsigned char free_page = 0;
-  int p = policy_select(argc, argv);
-
-  while (fgets(buffer, BUFFER_SIZE, input_fp) != NULL) {
-    total_addresses++;
-    int logical_address = atoi(buffer);
-
-    /* TODO
-    / Calculate the page offset and logical page number from logical_address */
-    // get the last 10 bit (0 - 9)
-    int offset = logical_address & OFFSET_MASK;
-    // get the (10 - 19) bits
-    int logical_page = (logical_address >> OFFSET_BITS) & PAGE_MASK;
-    ///////
-
-    int physical_page = search_tlb(logical_page);
-    // TLB hit
-    if (physical_page != -1) {
-      tlb_hits++;
-      // TLB miss
-    } else {
-      physical_page = pagetable[logical_page];
-      printf("physical page is %d\n", physical_page);
-
-      // Page fault
-      if (physical_page == -1) {
-        /* TODO */
-        // increase page_faults
-        page_faults++;
-
-        if (p == 0) {
-          // assign physical page to the free page
-          // increase free_page
-          physical_page = free_page;
-          free_page++;
-          // FIFO page replacement policy
-          free_page = free_page % PAGE_FRAME;
-          printf("values of free_page is %d\n", free_page);
-          // bring the page from backing to the main memory
-          memcpy(main_memory + physical_page * PAGE_SIZE,
-                 backing + logical_page * PAGE_SIZE, PAGE_SIZE);
-
-          // reset page table
-          for (int i = 0; i < PAGES; i++) {
-            if (pagetable[i] == physical_page) {
-              pagetable[i] = -1;
-            }
-          }
-          // update page table
-          pagetable[logical_page] = physical_page;
-        }
-      }
-
-      add_to_tlb(logical_page, physical_page);
+    if (argc != 5)
+    {
+        printf("Incorrect amount of arguments");
+        return -1;
     }
 
-    int physical_address = (physical_page << OFFSET_BITS) | offset;
-    signed char value = main_memory[physical_page * PAGE_SIZE + offset];
+    if (strcmp(argv[3], "-p") != 0)
+    {
+        printf("missing flag");
+        return -1;
+    }
 
-    printf("Virtual address: %d Physical address: %d Value: %d\n",
-           logical_address, physical_address, value);
-  }
+    int p = atoi(argv[4]);
 
-  printf("Number of Translated Addresses = %d\n", total_addresses);
-  printf("Page Faults = %d\n", page_faults);
-  printf("Page Fault Rate = %.3f\n", page_faults / (1. * total_addresses));
-  printf("TLB Hits = %d\n", tlb_hits);
-  printf("TLB Hit Rate = %.3f\n", tlb_hits / (1. * total_addresses));
+    return p;
+}
+// add to counter array function
+void add_counterarr(int logical_page, int counter)
+{
+    counter_arr[logical_page] = counter;
+}
+// return index of element of the counter array whose value is smallest
+int smallest_index()
+{
+    // find the position of logical page whose value is smallest, and
+    // it's physical page is not -1
+    int smallest_value = counter_arr[0];
+    int pos = 0;
+    for (int i = 1; i < PAGES; i++)
+    {
+        if (pagetable[i] != -1)
+        {
+            if (counter_arr[i] < smallest_value)
+            {
+                smallest_value = counter_arr[i];
+                pos = i;
+            }
+        }
+    }
+    return pos;
+}
 
-  return 0;
+int main(int argc, const char *argv[])
+{
+
+    const char *backing_filename = argv[1];
+    int backing_fd = open(backing_filename, O_RDONLY);
+    backing = mmap(0, 1024 * 1024, PROT_READ, MAP_PRIVATE, backing_fd, 0);
+
+    const char *input_filename = argv[2];
+    FILE *input_fp = fopen(input_filename, "r");
+
+    // Fill page table entries with -1 for initially empty table.
+    int i;
+    for (i = 0; i < PAGES; i++)
+    {
+        pagetable[i] = -1;
+    }
+    // initialize the lru array
+    for (i = 0; i < PAGES; i++)
+    {
+        counter_arr[i] = 0;
+    }
+    // Character buffer for reading lines of input file.
+    char buffer[BUFFER_SIZE];
+
+    // Data we need to keep track of to compute stats at end.
+    int total_addresses = 0;
+    int tlb_hits = 0;
+    int page_faults = 0;
+
+    // Number of the next unallocated physical page in main memory
+    int free_page = 0;
+    int p = policy_select(argc, argv);
+    // initialize the counter for lru
+    int counter = 0;
+
+    while (fgets(buffer, BUFFER_SIZE, input_fp) != NULL)
+    {
+        total_addresses++;
+        int logical_address = atoi(buffer);
+
+        /* TODO
+        / Calculate the page offset and logical page number from logical_address */
+        // get the last 10 bit (0 - 9)
+        int offset = logical_address & OFFSET_MASK;
+        // get the (10 - 19) bits
+        int logical_page = (logical_address >> OFFSET_BITS) & PAGE_MASK;
+        ///////
+
+        int physical_page = search_tlb(logical_page);
+        add_counterarr(logical_page, counter);
+        counter++;
+        // TLB hit
+        if (physical_page != -1)
+        {
+            tlb_hits++;
+
+            // TLB miss
+        }
+        else
+        {
+            physical_page = pagetable[logical_page];
+            // printf("physical page is %d\n", physical_page);
+
+            // Page fault
+
+            if (physical_page == -1)
+            {
+                /* TODO */
+                // increase page_faults
+                page_faults++;
+                // assign free_page to physical page
+                physical_page = free_page;
+                free_page++;
+                if (p == 0)
+                {
+                    // FIFO page replacement policy
+                    free_page = free_page % PAGE_FRAME;
+                    // bring the page from backing to the main memory
+                    memcpy(main_memory + physical_page * PAGE_SIZE,
+                           backing + logical_page * PAGE_SIZE, PAGE_SIZE);
+
+                    // reset page table
+                    for (int i = 0; i < PAGES; i++)
+                    {
+                        if (pagetable[i] == physical_page)
+                        {
+                            pagetable[i] = -1;
+                        }
+                    }
+                    // update page table
+                    pagetable[logical_page] = physical_page;
+                }
+                else if (p == 1)
+                {
+                    // check page_faults whether it is less than page_frame
+                    if (page_faults <= PAGE_FRAME)
+                    {
+                        // bring the page from backing to the main memory
+                        memcpy(main_memory + physical_page * PAGE_SIZE,
+                               backing + logical_page * PAGE_SIZE, PAGE_SIZE);
+                        // update page table
+                        pagetable[logical_page] = physical_page;
+                    }
+                    else
+                    {
+                        // use the position for lru replacement policy
+                        int pos = smallest_index();
+                        // get the value of physical page
+                        physical_page = pagetable[pos];
+                        // reset page table for that position
+                        pagetable[pos] = -1;
+                        // bring the page from backing to the main memory
+                        memcpy(main_memory + physical_page * PAGE_SIZE, backing + logical_page * PAGE_SIZE, PAGE_SIZE);
+                        // update page table
+                        pagetable[logical_page] = physical_page;
+                    }
+                }
+            }
+            add_to_tlb(logical_page, physical_page);
+       
+        }
+
+        int physical_address = (physical_page << OFFSET_BITS) | offset;
+        signed char value = main_memory[physical_page * PAGE_SIZE + offset];
+
+        printf("Virtual address: %d Physical address: %d Value: %d\n",
+               logical_address, physical_address, value);
+    }
+
+    printf("Number of Translated Addresses = %d\n", total_addresses);
+    printf("Page Faults = %d\n", page_faults);
+    printf("Page Fault Rate = %.3f\n", page_faults / (1. * total_addresses));
+    printf("TLB Hits = %d\n", tlb_hits);
+    printf("TLB Hit Rate = %.3f\n", tlb_hits / (1. * total_addresses));
+
+    return 0;
 }
